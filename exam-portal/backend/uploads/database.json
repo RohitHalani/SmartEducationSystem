@@ -1,0 +1,166 @@
+{
+  "users": [
+    {
+      "id": "1760424401147",
+      "name": "rohit thakkar",
+      "email": "rohitthakkar1367@gmail.com",
+      "password": "$2a$10$fbFhMn.BBkG3jQKjGevN5ebeN/O.lBRo94tFwUwG8UoOTucAadwj2",
+      "role": "student",
+      "department": "Computer Science",
+      "semester": 3,
+      "createdAt": "2025-10-14T06:46:41.147Z"
+    },
+    {
+      "id": "1760424450235",
+      "name": "ram thakkar",
+      "email": "ramthakkar1367@gmail.com",
+      "password": "$2a$10$g4OYqTQZz4EBswl4wKNOyO0xue/MpQwoMMMJHhnrEejxFJ6OWVJMG",
+      "role": "faculty",
+      "department": "Computer Science",
+      "semester": 3,
+      "createdAt": "2025-10-14T06:47:30.235Z"
+    },
+    {
+      "id": "1762316570971",
+      "name": "odiya vishal",
+      "email": "vishalodiya361@gmail.com",
+      "password": "$2a$10$wHfttxZwMWZBB9OCEFVa5./HIXBH2cHOo7/Y96N.ahYYN80INSZVW",
+      "role": "student",
+      "department": "Computer Science",
+      "semester": 3,
+      "createdAt": "2025-11-05T04:22:50.971Z"
+    },
+    {
+      "id": "1762316816033",
+      "name": "gohil devansh",
+      "email": "devansh1367@gmail.com",
+      "password": "$2a$10$reWyLKqkGmpXkse7macWd.iIimeOJ1RKiu7lyttijw4PsrL0eS0/K",
+      "role": "faculty",
+      "department": "Computer Science",
+      "semester": 3,
+      "createdAt": "2025-11-05T04:26:56.033Z"
+    }
+  ],
+  "materials": [
+    {
+      "id": "1760424849724",
+      "_id": "1760424849724",
+      "title": "QUESTIONBANK_DBMS",
+      "description": "DEAR STUDENTS , PLZ REFER THIS MATERIAL FOR THE EXAM PURPOSE.!",
+      "subject": "DBMS",
+      "department": "Computer Science",
+      "semester": 3,
+      "type": "reference",
+      "year": null,
+      "fileUrl": "/uploads/1760424849709-DBMS Question Bank W-26.pdf",
+      "fileName": "DBMS Question Bank W-26.pdf",
+      "uploadedBy": "1760424450235",
+      "uploadedByName": "ram thakkar",
+      "createdAt": "2025-10-14T06:54:09.724Z",
+      "likes": [
+        "1760424401147"
+      ],
+      "downloads": 2
+    },
+    {
+      "id": "1762316975534",
+      "_id": "1762316975534",
+      "title": "FOC UNIT 2",
+      "description": "U CAN REFER THIS FOR  ENDSEM EXAM",
+      "subject": "F.O.C",
+      "department": "Computer Science",
+      "semester": 3,
+      "type": "notes",
+      "year": 2025,
+      "fileUrl": "/uploads/1762316975520-Unit-2-Cloud-service-models.pdf",
+      "fileName": "Unit-2-Cloud-service-models.pdf",
+      "uploadedBy": "1762316816033",
+      "uploadedByName": "gohil devansh",
+      "createdAt": "2025-11-05T04:29:35.534Z",
+      "likes": [
+        "1762316816033"
+      ],
+      "downloads": 1
+    },
+    {
+      "id": "1762324863754",
+      "_id": "1762324863754",
+      "title": "que_bank_mid",
+      "description": "REFER THIS IMP QUESTIONS FOR YOUR MID SEM EXAMS",
+      "subject": "F.O.C",
+      "department": "Computer Science",
+      "semester": 3,
+      "type": "pyq",
+      "year": 2025,
+      "fileUrl": "/uploads/1762324863738-MID Quesiton Bank_FOC.docx.pdf",
+      "fileName": "MID Quesiton Bank_FOC.docx.pdf",
+      "uploadedBy": "1762316816033",
+      "uploadedByName": "gohil devansh",
+      "createdAt": "2025-11-05T06:41:03.754Z",
+      "likes": [
+        "1762316816033"
+      ],
+      "downloads": 1
+    }
+  ],
+  "chats": [
+    {
+      "id": "1760424489666",
+      "userId": "1760424450235",
+      "message": "hi",
+      "response": "Hello! 👋 I'm your AI study assistant. I can help you find study materials, PYQs, and answer questions about using the portal. What would you like to know?",
+      "timestamp": "2025-10-14T06:48:09.666Z"
+    },
+    {
+      "id": "1760424909353",
+      "userId": "1760424401147",
+      "message": "CAN U PROVIDE SOLUTION OF THE DBMS QUE BANK",
+      "response": "I'm here to help with your academic queries! You can ask me about:\n• Finding study materials and notes\n• Previous year question papers (PYQs)\n• Exam preparation tips\n• How to download or upload materials\n• Using the portal features\n\nWhat would you like to know?",
+      "timestamp": "2025-10-14T06:55:09.353Z"
+    },
+    {
+      "id": "1760424930705",
+      "userId": "1760424401147",
+      "message": "Finding study materials and notes",
+      "response": "Study notes are available in the Materials section. You can filter by subject, semester, and department to find relevant notes for your courses. Just click on Materials in the navigation menu!",
+      "timestamp": "2025-10-14T06:55:30.705Z"
+    },
+    {
+      "id": "1762315371023",
+      "userId": "1760424401147",
+      "message": "wtf",
+      "response": "I'm here to help with your academic queries! You can ask me about:\n• Finding study materials and notes\n• Previous year question papers (PYQs)\n• Exam preparation tips\n• How to download or upload materials\n• Using the portal features\n\nWhat would you like to know?",
+      "timestamp": "2025-11-05T04:02:51.023Z"
+    },
+    {
+      "id": "1762316618178",
+      "userId": "1762316570971",
+      "message": "give me pyq",
+      "response": "You can find previous year question papers in the Materials section. Filter by \"PYQ\" type to see all available papers. Would you like me to help you find papers for a specific subject?",
+      "timestamp": "2025-11-05T04:23:38.178Z"
+    },
+    {
+      "id": "1762320213756",
+      "userId": "1762316570971",
+      "message": "what is cloud computing",
+      "response": "I'm here to help with your academic queries! You can ask me about:\n• Explaining concepts and topics\n• Solving problems step-by-step\n• Finding study materials and notes\n• Previous year question papers (PYQs)\n• Exam preparation strategies\n\nWhat would you like to know?",
+      "timestamp": "2025-11-05T05:23:33.756Z",
+      "source": "fallback"
+    },
+    {
+      "id": "1762321569804",
+      "userId": "1762316816033",
+      "message": "what is the cloud computing",
+      "response": "I'm here to help with your academic queries! You can ask me about:\n• Explaining concepts and topics\n• Solving problems step-by-step\n• Finding study materials and notes\n• Previous year question papers (PYQs)\n• Exam preparation strategies\n\nWhat would you like to know?",
+      "timestamp": "2025-11-05T05:46:09.804Z",
+      "source": "fallback"
+    },
+    {
+      "id": "1762324723996",
+      "userId": "1762316570971",
+      "message": "erkjei",
+      "response": "I'm here to help with your academic queries! You can ask me about:\n• Finding study materials and notes\n• Previous year question papers (PYQs)\n• Exam preparation tips\n• How to download or upload materials\n• Using the portal features\n\nWhat would you like to know?",
+      "timestamp": "2025-11-05T06:38:43.996Z"
+    }
+  ]
+}
