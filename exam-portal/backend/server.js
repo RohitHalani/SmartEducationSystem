@@ -7,6 +7,15 @@ const path = require('path');
 const multer = require('multer');
 const mongoose = require('mongoose');
 
+// Validate required environment variables
+if (!process.env.JWT_SECRET) {
+    console.error('❌ FATAL: JWT_SECRET environment variable is not set.');
+    console.error('Please create a .env file with JWT_SECRET=your-secret-key');
+    process.exit(1);
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
 // Import models and database config
 const connectDB = require('./config/database');
 const User = require('./models/User');
@@ -55,7 +64,7 @@ const authMiddleware = async (req, res, next) => {
     }
     
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key-2024');
+        const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded;
         next();
     } catch (error) {
@@ -123,7 +132,7 @@ app.post('/api/auth/register', async (req, res) => {
                 role: user.role, 
                 email: user.email 
             },
-            process.env.JWT_SECRET || 'fallback-secret-key-2024',
+            JWT_SECRET,
             { expiresIn: '7d' }
         );
 
@@ -172,7 +181,7 @@ app.post('/api/auth/login', async (req, res) => {
 
         const token = jwt.sign(
             { userId: user._id.toString(), role: user.role, email: user.email },
-            process.env.JWT_SECRET || 'fallback-secret-key-2024',
+            JWT_SECRET,
             { expiresIn: '7d' }
         );
 

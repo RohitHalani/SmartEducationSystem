@@ -4,8 +4,8 @@ node_modules/
 # Environment variables
 .env
 
-# Uploaded files
-exam-portal/backend/uploads/uploads/
+# Uploaded files (user-uploaded content)
+exam-portal/backend/uploads/
 
 # Database files (contain sensitive data)
 database.json
