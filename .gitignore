@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Uploaded files (user-uploaded content)
+exam-portal/backend/uploads/
+
+# Database files (contain sensitive data)
+database.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*

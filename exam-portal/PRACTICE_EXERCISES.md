@@ -42,7 +42,7 @@ app.post('/api/auth/login', async (req, res) => {
 **Task**: Create `/api/test` endpoint that returns current time
 
 **Steps:**
-1. Open `backend/uploads/server.js`
+1. Open `backend/server.js`
 2. Add this route:
 ```javascript
 app.get('/api/test', (req, res) => {
