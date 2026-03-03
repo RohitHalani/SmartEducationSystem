@@ -108,7 +108,7 @@ module.exports = mongoose.model('User', userSchema);
 
 ---
 
-## 📁 File 3: `backend/uploads/server.js` - Part 1: Setup
+## 📁 File 3: `backend/server.js` - Part 1: Setup
 
 ### Lines 1-18: Imports and Setup
 
@@ -159,7 +159,7 @@ app.use('/uploads', express.static('uploads'));  // Serve uploaded files
 
 ---
 
-## 📁 File 3: `backend/uploads/server.js` - Part 2: Authentication
+## 📁 File 3: `backend/server.js` - Part 2: Authentication
 
 ### Lines 70-85: Authentication Middleware
 
@@ -199,7 +199,7 @@ Request → authMiddleware → (if invalid) → Error Response
 
 ---
 
-## 📁 File 3: `backend/uploads/server.js` - Part 3: Registration Route
+## 📁 File 3: `backend/server.js` - Part 3: Registration Route
 
 ### Lines 107-176: User Registration
 
@@ -290,7 +290,7 @@ Even if database is hacked, attackers can't see actual passwords!
 
 ---
 
-## 📁 File 3: `backend/uploads/server.js` - Part 4: Get Materials with Filtering
+## 📁 File 3: `backend/server.js` - Part 4: Get Materials with Filtering
 
 ### Lines 291-331: Get All Materials
 
@@ -578,7 +578,7 @@ favorites: [{
 
 **Step 2: Create Backend Route**
 ```javascript
-// In backend/uploads/server.js
+// In backend/server.js
 app.post('/api/materials/:id/favorite', authMiddleware, async (req, res) => {
     const material = await Material.findById(req.params.id);
     const userId = req.user.userId;

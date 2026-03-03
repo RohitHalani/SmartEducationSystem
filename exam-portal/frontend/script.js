@@ -43,12 +43,6 @@ function initializeEventListeners() {
     if (searchInput) {
         searchInput.addEventListener('input', debounce(loadMaterials, 500));
     }
-    
-    // Chat form
-    const chatForm = document.getElementById('chatForm');
-    if (chatForm) {
-        chatForm.addEventListener('submit', handleChatSubmit);
-    }
 }
 
 // Debounce function for search
@@ -196,11 +190,6 @@ function showMaterials() {
     document.getElementById('materialsPage').classList.remove('hidden');
     document.querySelector('.navbar').classList.remove('hidden');
     loadMaterials();
-}
-
-function handleChatSubmit(event) {
-    event.preventDefault();
-    sendMessage();
 }
 
 function showUpload() {
@@ -490,6 +479,12 @@ async function handleUpload(e) {
 }
 
 // Chatbot Functions
+function handleChatKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
+
 function toggleChatbot() {
     const chatWindow = document.getElementById('chatbotWindow');
     chatWindow.classList.toggle('active');
@@ -523,8 +518,6 @@ function addChatMessage(message, sender) {
 async function sendMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
-    const submitBtn = document.getElementById('chatSubmitBtn');
-    const chatLoader = document.getElementById('chatLoader');
     
     if (!message) return;
     
@@ -532,8 +525,6 @@ async function sendMessage() {
     input.value = '';
     
     input.disabled = true;
-    submitBtn.disabled = true;
-    chatLoader.classList.remove('hidden');
     
     try {
         const response = await fetch(`${API_URL}/chat`, {
@@ -551,18 +542,15 @@ async function sendMessage() {
         
         const data = await response.json();
         
-        chatLoader.classList.add('hidden');
         addChatMessage(data.response, 'bot');
     } catch (error) {
         console.error('Chat error:', error);
-        chatLoader.classList.add('hidden');
         addChatMessage(
             "I'm having trouble connecting right now. Please check your internet connection and try again.",
             'bot'
         );
     } finally {
         input.disabled = false;
-        submitBtn.disabled = false;
         input.focus();
     }
 }
@@ -637,33 +625,6 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Add CSS animations for notifications
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
-
 // Global error handler
 window.addEventListener('error', function(e) {
     console.error('Global error:', e.error);
@@ -681,5 +642,6 @@ window.downloadMaterial = downloadMaterial;
 window.likeMaterial = likeMaterial;
 window.toggleChatbot = toggleChatbot;
 window.sendMessage = sendMessage;
+window.handleChatKeyPress = handleChatKeyPress;
 
 console.log('✅ All functions loaded and ready!');
