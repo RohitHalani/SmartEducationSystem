@@ -49,11 +49,11 @@ const storage = multer.diskStorage({
     }
 });
 
+// Multer instance for chatbot image uploads (images only)
 const upload = multer({
     storage,
     limits: { fileSize: 50 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        // Whitelist approach - only allow specific MIME types
         const allowedMimes = [
             'image/jpeg',
             'image/png',
@@ -65,6 +65,32 @@ const upload = multer({
             cb(null, true);
         } else {
             cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.'), false);
+        }
+    }
+});
+
+// Multer instance for material uploads (documents and images)
+const materialUpload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowedMimes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp'
+        ];
+
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Allowed types: PDF, DOC, DOCX, PPT, PPTX, TXT, and images.'), false);
         }
     }
 });
@@ -242,7 +268,7 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
 });
 
 // Upload Material (Faculty only)
-app.post('/api/materials', authMiddleware, facultyOnly, upload.single('file'), async (req, res) => {
+app.post('/api/materials', authMiddleware, facultyOnly, materialUpload.single('file'), async (req, res) => {
     try {
         const { title, description, subject, department, semester, type, year } = req.body;
         

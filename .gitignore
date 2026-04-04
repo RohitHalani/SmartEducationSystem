@@ -1,0 +1,24 @@
+# Environment variable files - never commit real secrets
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Node.js dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/settings.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
