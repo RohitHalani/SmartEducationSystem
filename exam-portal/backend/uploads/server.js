@@ -41,13 +41,32 @@ const storage = multer.diskStorage({
         cb(null, 'uploads/');
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
+        // Sanitize filename to prevent path traversal
+        const sanitized = path.basename(file.originalname);
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(7);
+        cb(null, `${timestamp}-${random}-${sanitized}`);
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 }
+    limits: { fileSize: 50 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        // Whitelist approach - only allow specific MIME types
+        const allowedMimes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp'
+        ];
+
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.'), false);
+        }
+    }
 });
 
 // Authentication Middleware
@@ -411,8 +430,8 @@ app.post('/api/chat', authMiddleware, upload.single('image'), async (req, res) =
         const { message } = req.body;
         const imageFile = req.file;
 
-        if (!message) {
-            return res.status(400).json({ error: 'Message is required' });
+        if (!message && !imageFile) {
+            return res.status(400).json({ error: 'Message or image is required' });
         }
 
         let response = '';
@@ -454,9 +473,16 @@ Please provide a helpful, friendly, and concise response. If the question is abo
             let result;
 
             if (imageFile) {
-                // Read image file and convert to base64
-                const fs = require('fs');
-                const imageData = fs.readFileSync(imageFile.path);
+                // Read image file and convert to base64 using async operation
+                const fs = require('fs').promises;
+                const fsSync = require('fs');
+
+                // Validate file exists and check size
+                if (!fsSync.existsSync(imageFile.path)) {
+                    throw new Error('Uploaded file not found');
+                }
+
+                const imageData = await fs.readFile(imageFile.path);
                 const base64Image = imageData.toString('base64');
 
                 // Prepare image part for Gemini Vision
@@ -473,7 +499,14 @@ Please provide a helpful, friendly, and concise response. If the question is abo
             }
 
             const aiResponse = result.response;
+            if (!aiResponse || typeof aiResponse.text !== 'function') {
+                throw new Error('Invalid Gemini API response');
+            }
             response = aiResponse.text();
+
+            if (!response || response.trim().length === 0) {
+                throw new Error('Empty response from Gemini API');
+            }
 
         } catch (geminiError) {
             console.log('⚠️ Gemini API unavailable, using fallback responses:', geminiError.message);
@@ -503,17 +536,40 @@ Please provide a helpful, friendly, and concise response. If the question is abo
         }
 
         // Save chat history
-        await Chat.create({
-            userId: req.user.userId,
-            message,
-            response,
-            imageUrl,
-            imageMimeType
-        });
+        try {
+            await Chat.create({
+                userId: req.user.userId,
+                message,
+                response,
+                imageUrl,
+                imageMimeType
+            });
+        } catch (dbError) {
+            console.error('Failed to save chat:', dbError);
+
+            // Clean up uploaded file if database save fails
+            if (imageFile) {
+                const fsSync = require('fs');
+                if (fsSync.existsSync(imageFile.path)) {
+                    fsSync.unlinkSync(imageFile.path);
+                }
+            }
+
+            throw dbError;
+        }
 
         res.json({ response, imageUrl });
     } catch (error) {
         console.error('❌ Chat error:', error);
+
+        // Clean up uploaded file on any error
+        if (req.file) {
+            const fsSync = require('fs');
+            if (fsSync.existsSync(req.file.path)) {
+                fsSync.unlinkSync(req.file.path);
+            }
+        }
+
         res.status(500).json({ error: 'Sorry, I encountered an error. Please try again.' });
     }
 });

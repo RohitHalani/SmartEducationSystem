@@ -506,14 +506,28 @@ function addChatMessage(message, sender, imageUrl = null) {
 
     // Add image if provided
     if (imageUrl && sender === 'user') {
-        const img = document.createElement('img');
-        img.src = imageUrl;
-        img.style.maxWidth = '200px';
-        img.style.maxHeight = '200px';
-        img.style.borderRadius = '8px';
-        img.style.marginBottom = '8px';
-        img.style.display = 'block';
-        messageDiv.appendChild(img);
+        // Validate URL is from trusted domain
+        try {
+            const url = new URL(imageUrl, window.location.origin);
+            if (url.origin === window.location.origin && url.pathname.startsWith('/uploads/')) {
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.alt = 'Uploaded image';
+                img.style.maxWidth = '200px';
+                img.style.maxHeight = '200px';
+                img.style.borderRadius = '8px';
+                img.style.marginBottom = '8px';
+                img.style.display = 'block';
+                img.style.objectFit = 'contain';
+                img.onerror = function() {
+                    this.alt = 'Image failed to load';
+                    this.style.display = 'none';
+                };
+                messageDiv.appendChild(img);
+            }
+        } catch (e) {
+            console.error('Invalid image URL:', e);
+        }
     }
 
     if (sender === 'bot') {
@@ -603,16 +617,40 @@ function escapeHtml(unsafe) {
 // Image handling functions for chatbot
 function handleImageSelect(event) {
     const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const previewImg = document.getElementById('previewImg');
-            const imagePreview = document.getElementById('imagePreview');
-            previewImg.src = e.target.result;
-            imagePreview.style.display = 'flex';
-        };
-        reader.readAsDataURL(file);
+
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        event.target.value = '';
+        return;
     }
+
+    // Validate file size (50MB max)
+    if (file.size > 50 * 1024 * 1024) {
+        alert('Image size must be less than 50MB');
+        event.target.value = '';
+        return;
+    }
+
+    if (!window.FileReader) {
+        alert('Your browser does not support image preview');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const previewImg = document.getElementById('previewImg');
+        const imagePreview = document.getElementById('imagePreview');
+        previewImg.src = e.target.result;
+        imagePreview.style.display = 'flex';
+    };
+    reader.onerror = function() {
+        alert('Failed to read image file');
+        event.target.value = '';
+    };
+    reader.readAsDataURL(file);
 }
 
 function removeImage() {
