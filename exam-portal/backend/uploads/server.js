@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const multer = require('multer');
 const mongoose = require('mongoose');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Import models and database config
 const connectDB = require('../config/database');
@@ -15,6 +16,9 @@ const Chat = require('../models/Chat');
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const app = express();
 
@@ -401,37 +405,70 @@ app.delete('/api/materials/:id', authMiddleware, facultyOnly, async (req, res) =
     }
 });
 
-// AI Chatbot
+// AI Chatbot with Gemini API
 app.post('/api/chat', authMiddleware, async (req, res) => {
     try {
         const { message } = req.body;
-        
+
         if (!message) {
             return res.status(400).json({ error: 'Message is required' });
         }
 
-        // Simple keyword-based responses (Backend Processing)
         let response = '';
-        const lowerMessage = message.toLowerCase();
-        
-        if (lowerMessage.includes('pyq') || lowerMessage.includes('previous year') || lowerMessage.includes('question paper')) {
-            response = 'You can find previous year question papers in the Materials section. Filter by "PYQ" type to see all available papers. Would you like me to help you find papers for a specific subject?';
-        } else if (lowerMessage.includes('notes') || lowerMessage.includes('study material')) {
-            response = 'Study notes are available in the Materials section. You can filter by subject, semester, and department to find relevant notes for your courses. Just click on Materials in the navigation menu!';
-        } else if (lowerMessage.includes('syllabus')) {
-            response = 'Syllabus documents are available in the Materials section. Filter by "Syllabus" type to view the curriculum for different courses. This will help you plan your studies better!';
-        } else if (lowerMessage.includes('exam') || lowerMessage.includes('preparation')) {
-            response = 'I can help you with exam preparation! We have notes, PYQs, and reference materials. What subject are you preparing for? I can guide you to the right materials.';
-        } else if (lowerMessage.includes('download') || lowerMessage.includes('how to download')) {
-            response = 'To download materials: 1) Go to the Materials page, 2) Find the document you need using filters or search, 3) Click the green "Download" button. Make sure you\'re logged in!';
-        } else if (lowerMessage.includes('upload')) {
-            response = 'Only faculty members can upload materials. If you\'re a faculty member, use the Upload button in the navigation menu to share notes, PYQs, or other study materials with students.';
-        } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-            response = 'Hello! 👋 I\'m your AI study assistant. I can help you find study materials, PYQs, and answer questions about using the portal. What would you like to know?';
-        } else if (lowerMessage.includes('thank')) {
-            response = 'You\'re welcome! 😊 Feel free to ask if you need any other help with your studies or using the portal.';
-        } else {
-            response = 'I\'m here to help with your academic queries! You can ask me about:\n• Finding study materials and notes\n• Previous year question papers (PYQs)\n• Exam preparation tips\n• How to download or upload materials\n• Using the portal features\n\nWhat would you like to know?';
+
+        // Try to use Gemini API
+        try {
+            if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
+                throw new Error('Gemini API key not configured');
+            }
+
+            const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+            // Create a context-aware prompt for the educational portal
+            const prompt = `You are an AI study assistant for an educational portal called "Exam Buddy".
+The portal helps students access study materials, previous year question papers (PYQs), syllabi, and reference materials.
+
+Features available on the portal:
+- Materials section: Browse and download notes, PYQs, syllabi by department, semester, and subject
+- Upload feature: Faculty can upload materials
+- Dashboard: View statistics and recent materials
+- Search and filtering: Find specific materials easily
+
+User role: ${req.user.role}
+
+User question: ${message}
+
+Please provide a helpful, friendly, and concise response. If the question is about finding materials, guide them to use the Materials section with appropriate filters. If it's about uploading, remind that only faculty can upload. Keep responses conversational and encouraging.`;
+
+            const result = await model.generateContent(prompt);
+            const aiResponse = result.response;
+            response = aiResponse.text();
+
+        } catch (geminiError) {
+            console.log('⚠️ Gemini API unavailable, using fallback responses:', geminiError.message);
+
+            // Fallback to keyword-based responses
+            const lowerMessage = message.toLowerCase();
+
+            if (lowerMessage.includes('pyq') || lowerMessage.includes('previous year') || lowerMessage.includes('question paper')) {
+                response = 'You can find previous year question papers in the Materials section. Filter by "PYQ" type to see all available papers. Would you like me to help you find papers for a specific subject?';
+            } else if (lowerMessage.includes('notes') || lowerMessage.includes('study material')) {
+                response = 'Study notes are available in the Materials section. You can filter by subject, semester, and department to find relevant notes for your courses. Just click on Materials in the navigation menu!';
+            } else if (lowerMessage.includes('syllabus')) {
+                response = 'Syllabus documents are available in the Materials section. Filter by "Syllabus" type to view the curriculum for different courses. This will help you plan your studies better!';
+            } else if (lowerMessage.includes('exam') || lowerMessage.includes('preparation')) {
+                response = 'I can help you with exam preparation! We have notes, PYQs, and reference materials. What subject are you preparing for? I can guide you to the right materials.';
+            } else if (lowerMessage.includes('download') || lowerMessage.includes('how to download')) {
+                response = 'To download materials: 1) Go to the Materials page, 2) Find the document you need using filters or search, 3) Click the green "Download" button. Make sure you\'re logged in!';
+            } else if (lowerMessage.includes('upload')) {
+                response = 'Only faculty members can upload materials. If you\'re a faculty member, use the Upload button in the navigation menu to share notes, PYQs, or other study materials with students.';
+            } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+                response = 'Hello! 👋 I\'m your AI study assistant. I can help you find study materials, PYQs, and answer questions about using the portal. What would you like to know?';
+            } else if (lowerMessage.includes('thank')) {
+                response = 'You\'re welcome! 😊 Feel free to ask if you need any other help with your studies or using the portal.';
+            } else {
+                response = 'I\'m here to help with your academic queries! You can ask me about:\n• Finding study materials and notes\n• Previous year question papers (PYQs)\n• Exam preparation tips\n• How to download or upload materials\n• Using the portal features\n\nWhat would you like to know?';
+            }
         }
 
         // Save chat history
@@ -444,7 +481,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
         res.json({ response });
     } catch (error) {
         console.error('❌ Chat error:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Sorry, I encountered an error. Please try again.' });
     }
 });
 

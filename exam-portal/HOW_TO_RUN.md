@@ -157,6 +157,7 @@ nano .env
 MONGODB_URI=mongodb://localhost:27017/exam-portal
 JWT_SECRET=my-super-secret-jwt-key-2024-change-this
 PORT=5000
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 **For MongoDB Atlas:**
@@ -164,12 +165,16 @@ PORT=5000
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/exam-portal
 JWT_SECRET=my-super-secret-jwt-key-2024-change-this
 PORT=5000
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 **Important:**
 - Replace `username` and `password` with your Atlas credentials
 - Replace `cluster.mongodb.net` with your cluster URL
 - Change `JWT_SECRET` to any random string (keep it secret!)
+- **NEW**: Get your Gemini API key from https://makersuite.google.com/app/apikey
+  - See `backend/GEMINI_API_SETUP.md` for detailed instructions
+  - The chatbot will work without it using fallback responses
 
 ---
 
@@ -274,7 +279,10 @@ Go to: `http://localhost:3000` (or whatever port you used)
 - [ ] Browse Materials
 - [ ] Upload Material (if Faculty)
 - [ ] Search Materials
-- [ ] Use Chatbot
+- [ ] Use AI Chatbot (powered by Google Gemini)
+  - Click the chatbot icon in bottom-right corner
+  - Ask questions about materials, PYQs, studying
+  - See `backend/GEMINI_API_SETUP.md` for API setup
 
 ---
 
