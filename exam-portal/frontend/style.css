@@ -395,12 +395,13 @@ body {
 
 .chatbot-input {
     display: flex;
+    flex-wrap: wrap;
     padding: 15px;
     border-top: 1px solid #ddd;
     background: white;
 }
 
-.chatbot-input input {
+.chatbot-input input[type="text"] {
     flex: 1;
     border: 1px solid #ddd;
     border-radius: 25px;
@@ -410,7 +411,7 @@ body {
     transition: border-color 0.3s ease;
 }
 
-.chatbot-input input:focus {
+.chatbot-input input[type="text"]:focus {
     border-color: var(--primary-color);
 }
 
@@ -431,6 +432,48 @@ body {
 .chatbot-input button:hover {
     background: var(--secondary-color);
     transform: scale(1.1);
+}
+
+.chatbot-input .image-attach-btn {
+    background: #6c757d;
+    margin-right: 10px;
+}
+
+.chatbot-input .image-attach-btn:hover {
+    background: #5a6268;
+}
+
+.image-preview {
+    display: none;
+    position: relative;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-preview img {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.image-preview .remove-image-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #dc3545;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+}
+
+.image-preview .remove-image-btn:hover {
+    background: #c82333;
 }
 
 /* Utility Classes */

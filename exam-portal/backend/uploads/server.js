@@ -405,16 +405,25 @@ app.delete('/api/materials/:id', authMiddleware, facultyOnly, async (req, res) =
     }
 });
 
-// AI Chatbot with Gemini API
-app.post('/api/chat', authMiddleware, async (req, res) => {
+// AI Chatbot with Gemini API (with image support)
+app.post('/api/chat', authMiddleware, upload.single('image'), async (req, res) => {
     try {
         const { message } = req.body;
+        const imageFile = req.file;
 
         if (!message) {
             return res.status(400).json({ error: 'Message is required' });
         }
 
         let response = '';
+        let imageUrl = null;
+        let imageMimeType = null;
+
+        // If image is uploaded, store its information
+        if (imageFile) {
+            imageUrl = `/uploads/${imageFile.filename}`;
+            imageMimeType = imageFile.mimetype;
+        }
 
         // Try to use Gemini API
         try {
@@ -422,10 +431,12 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
                 throw new Error('Gemini API key not configured');
             }
 
-            const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+            // Use gemini-pro-vision if image is provided, otherwise gemini-pro
+            const modelName = imageFile ? 'gemini-pro-vision' : 'gemini-pro';
+            const model = genAI.getGenerativeModel({ model: modelName });
 
             // Create a context-aware prompt for the educational portal
-            const prompt = `You are an AI study assistant for an educational portal called "Exam Buddy".
+            const promptText = `You are an AI study assistant for an educational portal called "Exam Buddy".
 The portal helps students access study materials, previous year question papers (PYQs), syllabi, and reference materials.
 
 Features available on the portal:
@@ -438,9 +449,29 @@ User role: ${req.user.role}
 
 User question: ${message}
 
-Please provide a helpful, friendly, and concise response. If the question is about finding materials, guide them to use the Materials section with appropriate filters. If it's about uploading, remind that only faculty can upload. Keep responses conversational and encouraging.`;
+Please provide a helpful, friendly, and concise response. If the question is about finding materials, guide them to use the Materials section with appropriate filters. If it's about uploading, remind that only faculty can upload. Keep responses conversational and encouraging.${imageFile ? ' The user has also shared an image - please analyze it and provide relevant help.' : ''}`;
 
-            const result = await model.generateContent(prompt);
+            let result;
+
+            if (imageFile) {
+                // Read image file and convert to base64
+                const fs = require('fs');
+                const imageData = fs.readFileSync(imageFile.path);
+                const base64Image = imageData.toString('base64');
+
+                // Prepare image part for Gemini Vision
+                const imagePart = {
+                    inlineData: {
+                        data: base64Image,
+                        mimeType: imageFile.mimetype
+                    }
+                };
+
+                result = await model.generateContent([promptText, imagePart]);
+            } else {
+                result = await model.generateContent(promptText);
+            }
+
             const aiResponse = result.response;
             response = aiResponse.text();
 
@@ -475,10 +506,12 @@ Please provide a helpful, friendly, and concise response. If the question is abo
         await Chat.create({
             userId: req.user.userId,
             message,
-            response
+            response,
+            imageUrl,
+            imageMimeType
         });
 
-        res.json({ response });
+        res.json({ response, imageUrl });
     } catch (error) {
         console.error('❌ Chat error:', error);
         res.status(500).json({ error: 'Sorry, I encountered an error. Please try again.' });
