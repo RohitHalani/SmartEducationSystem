@@ -348,10 +348,20 @@
             </div>
             <div class="chatbot-messages" id="chatMessages">
                 <div class="message bot">
-                    👋 Hi! I'm your AI study assistant. I can help you find materials, PYQs, and answer your questions about the portal. How can I help you today?
+                    👋 Hi! I'm your AI study assistant. I can help you find materials, PYQs, and answer your questions about the portal. You can also share images for help! How can I help you today?
                 </div>
             </div>
             <div class="chatbot-input">
+                <input type="file" id="chatImageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                <button onclick="document.getElementById('chatImageInput').click()" title="Attach image" class="image-attach-btn">
+                    <i class="fas fa-image"></i>
+                </button>
+                <div id="imagePreview" class="image-preview" style="display: none;">
+                    <img id="previewImg" src="" alt="Preview">
+                    <button onclick="removeImage()" class="remove-image-btn" title="Remove image">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleChatKeyPress(event)">
                 <button onclick="sendMessage()" title="Send message">
                     <i class="fas fa-paper-plane"></i>

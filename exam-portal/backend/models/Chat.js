@@ -13,6 +13,14 @@ const chatSchema = new mongoose.Schema({
     response: {
         type: String,
         required: true
+    },
+    imageUrl: {
+        type: String,
+        required: false
+    },
+    imageMimeType: {
+        type: String,
+        required: false
     }
 }, {
     timestamps: true

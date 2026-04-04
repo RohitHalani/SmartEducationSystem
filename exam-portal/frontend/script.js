@@ -499,23 +499,51 @@ function toggleChatbot() {
     }
 }
 
-function addChatMessage(message, sender) {
+function addChatMessage(message, sender, imageUrl = null) {
     const messagesContainer = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${sender}`;
-    
+
+    // Add image if provided
+    if (imageUrl && sender === 'user') {
+        // Validate URL is from trusted domain
+        try {
+            const url = new URL(imageUrl, window.location.origin);
+            if (url.origin === window.location.origin && url.pathname.startsWith('/uploads/')) {
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.alt = 'Uploaded image';
+                img.style.maxWidth = '200px';
+                img.style.maxHeight = '200px';
+                img.style.borderRadius = '8px';
+                img.style.marginBottom = '8px';
+                img.style.display = 'block';
+                img.style.objectFit = 'contain';
+                img.onerror = function() {
+                    this.alt = 'Image failed to load';
+                    this.style.display = 'none';
+                };
+                messageDiv.appendChild(img);
+            }
+        } catch (e) {
+            console.error('Invalid image URL:', e);
+        }
+    }
+
     if (sender === 'bot') {
         let formattedMessage = escapeHtml(message)
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/`([^`]+)`/g, '<code class="bg-gray-200 text-sm px-1 py-0.5 rounded">$1</code>')
             .replace(/\n/g, '<br>');
-        
-        messageDiv.innerHTML = formattedMessage;
+
+        messageDiv.innerHTML += formattedMessage;
     } else {
-        messageDiv.textContent = message;
+        const textNode = document.createElement('div');
+        textNode.textContent = message;
+        messageDiv.appendChild(textNode);
     }
-    
+
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
@@ -523,46 +551,54 @@ function addChatMessage(message, sender) {
 async function sendMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
-    const submitBtn = document.getElementById('chatSubmitBtn');
-    const chatLoader = document.getElementById('chatLoader');
-    
-    if (!message) return;
-    
-    addChatMessage(message, 'user');
+    const imageInput = document.getElementById('chatImageInput');
+    const imageFile = imageInput.files[0];
+
+    if (!message && !imageFile) return;
+
+    // Get image preview URL if exists
+    const previewImg = document.getElementById('previewImg');
+    const imagePreviewUrl = previewImg.src || null;
+
+    addChatMessage(message || 'Image attached', 'user', imagePreviewUrl);
     input.value = '';
-    
+
     input.disabled = true;
-    submitBtn.disabled = true;
-    chatLoader.classList.remove('hidden');
-    
+
     try {
+        const formData = new FormData();
+        formData.append('message', message || 'What can you tell me about this image?');
+
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
+
         const response = await fetch(`${API_URL}/chat`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${authToken}`
             },
-            body: JSON.stringify({ message })
+            body: formData
         });
-        
+
         if (!response.ok) {
             throw new Error('Chat request failed');
         }
-        
+
         const data = await response.json();
-        
-        chatLoader.classList.add('hidden');
+
         addChatMessage(data.response, 'bot');
+
+        // Clear image after sending
+        removeImage();
     } catch (error) {
         console.error('Chat error:', error);
-        chatLoader.classList.add('hidden');
         addChatMessage(
             "I'm having trouble connecting right now. Please check your internet connection and try again.",
             'bot'
         );
     } finally {
         input.disabled = false;
-        submitBtn.disabled = false;
         input.focus();
     }
 }
@@ -576,6 +612,61 @@ function escapeHtml(unsafe) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+// Image handling functions for chatbot
+function handleImageSelect(event) {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        event.target.value = '';
+        return;
+    }
+
+    // Validate file size (50MB max)
+    if (file.size > 50 * 1024 * 1024) {
+        alert('Image size must be less than 50MB');
+        event.target.value = '';
+        return;
+    }
+
+    if (!window.FileReader) {
+        alert('Your browser does not support image preview');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const previewImg = document.getElementById('previewImg');
+        const imagePreview = document.getElementById('imagePreview');
+        previewImg.src = e.target.result;
+        imagePreview.style.display = 'flex';
+    };
+    reader.onerror = function() {
+        alert('Failed to read image file');
+        event.target.value = '';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeImage() {
+    const imageInput = document.getElementById('chatImageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+
+    imageInput.value = '';
+    previewImg.src = '';
+    imagePreview.style.display = 'none';
+}
+
+function handleChatKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
 }
 
 function formatDate(dateString) {

@@ -41,13 +41,32 @@ const storage = multer.diskStorage({
         cb(null, 'uploads/');
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
+        // Sanitize filename to prevent path traversal
+        const sanitized = path.basename(file.originalname);
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(7);
+        cb(null, `${timestamp}-${random}-${sanitized}`);
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage,
-    limits: { fileSize: 50 * 1024 * 1024 }
+    limits: { fileSize: 50 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        // Whitelist approach - only allow specific MIME types
+        const allowedMimes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp'
+        ];
+
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.'), false);
+        }
+    }
 });
 
 // Authentication Middleware
@@ -405,16 +424,25 @@ app.delete('/api/materials/:id', authMiddleware, facultyOnly, async (req, res) =
     }
 });
 
-// AI Chatbot with Gemini API
-app.post('/api/chat', authMiddleware, async (req, res) => {
+// AI Chatbot with Gemini API (with image support)
+app.post('/api/chat', authMiddleware, upload.single('image'), async (req, res) => {
     try {
         const { message } = req.body;
+        const imageFile = req.file;
 
-        if (!message) {
-            return res.status(400).json({ error: 'Message is required' });
+        if (!message && !imageFile) {
+            return res.status(400).json({ error: 'Message or image is required' });
         }
 
         let response = '';
+        let imageUrl = null;
+        let imageMimeType = null;
+
+        // If image is uploaded, store its information
+        if (imageFile) {
+            imageUrl = `/uploads/${imageFile.filename}`;
+            imageMimeType = imageFile.mimetype;
+        }
 
         // Try to use Gemini API
         try {
@@ -422,10 +450,12 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
                 throw new Error('Gemini API key not configured');
             }
 
-            const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+            // Use gemini-pro-vision if image is provided, otherwise gemini-pro
+            const modelName = imageFile ? 'gemini-pro-vision' : 'gemini-pro';
+            const model = genAI.getGenerativeModel({ model: modelName });
 
             // Create a context-aware prompt for the educational portal
-            const prompt = `You are an AI study assistant for an educational portal called "Exam Buddy".
+            const promptText = `You are an AI study assistant for an educational portal called "Exam Buddy".
 The portal helps students access study materials, previous year question papers (PYQs), syllabi, and reference materials.
 
 Features available on the portal:
@@ -438,11 +468,45 @@ User role: ${req.user.role}
 
 User question: ${message}
 
-Please provide a helpful, friendly, and concise response. If the question is about finding materials, guide them to use the Materials section with appropriate filters. If it's about uploading, remind that only faculty can upload. Keep responses conversational and encouraging.`;
+Please provide a helpful, friendly, and concise response. If the question is about finding materials, guide them to use the Materials section with appropriate filters. If it's about uploading, remind that only faculty can upload. Keep responses conversational and encouraging.${imageFile ? ' The user has also shared an image - please analyze it and provide relevant help.' : ''}`;
 
-            const result = await model.generateContent(prompt);
+            let result;
+
+            if (imageFile) {
+                // Read image file and convert to base64 using async operation
+                const fs = require('fs').promises;
+                const fsSync = require('fs');
+
+                // Validate file exists and check size
+                if (!fsSync.existsSync(imageFile.path)) {
+                    throw new Error('Uploaded file not found');
+                }
+
+                const imageData = await fs.readFile(imageFile.path);
+                const base64Image = imageData.toString('base64');
+
+                // Prepare image part for Gemini Vision
+                const imagePart = {
+                    inlineData: {
+                        data: base64Image,
+                        mimeType: imageFile.mimetype
+                    }
+                };
+
+                result = await model.generateContent([promptText, imagePart]);
+            } else {
+                result = await model.generateContent(promptText);
+            }
+
             const aiResponse = result.response;
+            if (!aiResponse || typeof aiResponse.text !== 'function') {
+                throw new Error('Invalid Gemini API response');
+            }
             response = aiResponse.text();
+
+            if (!response || response.trim().length === 0) {
+                throw new Error('Empty response from Gemini API');
+            }
 
         } catch (geminiError) {
             console.log('⚠️ Gemini API unavailable, using fallback responses:', geminiError.message);
@@ -472,15 +536,40 @@ Please provide a helpful, friendly, and concise response. If the question is abo
         }
 
         // Save chat history
-        await Chat.create({
-            userId: req.user.userId,
-            message,
-            response
-        });
+        try {
+            await Chat.create({
+                userId: req.user.userId,
+                message,
+                response,
+                imageUrl,
+                imageMimeType
+            });
+        } catch (dbError) {
+            console.error('Failed to save chat:', dbError);
 
-        res.json({ response });
+            // Clean up uploaded file if database save fails
+            if (imageFile) {
+                const fsSync = require('fs');
+                if (fsSync.existsSync(imageFile.path)) {
+                    fsSync.unlinkSync(imageFile.path);
+                }
+            }
+
+            throw dbError;
+        }
+
+        res.json({ response, imageUrl });
     } catch (error) {
         console.error('❌ Chat error:', error);
+
+        // Clean up uploaded file on any error
+        if (req.file) {
+            const fsSync = require('fs');
+            if (fsSync.existsSync(req.file.path)) {
+                fsSync.unlinkSync(req.file.path);
+            }
+        }
+
         res.status(500).json({ error: 'Sorry, I encountered an error. Please try again.' });
     }
 });
