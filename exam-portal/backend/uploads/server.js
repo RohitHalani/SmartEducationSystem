@@ -8,10 +8,10 @@ const multer = require('multer');
 const mongoose = require('mongoose');
 
 // Import models and database config
-const connectDB = require('../../config/database');
-const User = require('../../models/User');
-const Material = require('../../models/Material');
-const Chat = require('../../models/Chat');
+const connectDB = require('../config/database');
+const User = require('../models/User');
+const Material = require('../models/Material');
+const Chat = require('../models/Chat');
 
 // Connect to MongoDB
 connectDB();
